@@ -1,0 +1,42 @@
+# docker-compose.yml
+
+version: '3.8'
+
+services:
+  mongo:
+    image: mongo:6.0
+    container_name: mongo
+    restart: always
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: rootuser
+      MONGO_INITDB_ROOT_PASSWORD: rootpass
+      MONGO_INITDB_DATABASE: bazzy_ecommerce
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+    networks:
+      - bazzy_network
+
+  e_commerce_app:
+    build: .
+    container_name: e_commerce_app
+    restart: always
+    env_file:
+      - .env
+    ports:
+      - "8001:8001"
+      - "8002:8002"
+      - "8003:8003"
+      - "8004:8004"
+    depends_on:
+      - mongo
+    networks:
+      - bazzy_network
+
+networks:
+  bazzy_network:
+    driver: bridge
+
+volumes:
+  mongo-data:

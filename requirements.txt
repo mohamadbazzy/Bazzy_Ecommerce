@@ -1,7 +1,13 @@
+# requirements.txt
+
 fastapi
-uvicorn
+uvicorn[standard]
 motor
-pydantic==1.10.9
+pydantic
+python-dotenv
 passlib[bcrypt]
 python-jose
-python-dotenv
+supervisor
+httpx
+pytest
+pytest-asyncio

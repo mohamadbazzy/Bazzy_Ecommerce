@@ -1,3 +1,12 @@
+"""
+Users Service Module.
+
+This module defines the `UserService` class, which manages user-related
+operations such as creating new users, retrieving user information, updating user
+details, deleting users, and managing wallet transactions. It interacts with the
+database to perform CRUD operations on user and wallet data.
+"""
+
 from app.schemas.users import UserCreate, UserOut, UserUpdate, UserOutDelete, Wallet, UsersOut
 from motor.motor_asyncio import AsyncIOMotorDatabase
 from bson import ObjectId
@@ -7,8 +16,25 @@ from app.core.security import get_password_hash
 
 
 class UserService:
+    """
+    Service class for managing users.
+    """
+
     @staticmethod
     async def create_user(db: AsyncIOMotorDatabase, user_data: UserCreate) -> UserOut:
+        """
+        Create a new user with an associated wallet.
+
+        Args:
+            db (AsyncIOMotorDatabase): The MongoDB database instance.
+            user_data (UserCreate): The user creation data.
+
+        Returns:
+            UserOut: The created user's information including wallet details.
+
+        Raises:
+            HTTPException: If the username or email already exists or if user/wallet creation fails.
+        """
         # Check if username or email already exists
         existing_user = await db["users"].find_one({
             "$or": [
@@ -70,6 +96,22 @@ class UserService:
 
     @staticmethod
     async def get_all_users(db: AsyncIOMotorDatabase, page: int, limit: int, search: str, role: str) -> UsersOut:
+        """
+        Retrieve all users with pagination and optional filtering.
+
+        Args:
+            db (AsyncIOMotorDatabase): The MongoDB database instance.
+            page (int): The current page number.
+            limit (int): The number of users per page.
+            search (str): The search query to filter users by username.
+            role (str): The role to filter users by (e.g., "admin", "user").
+
+        Returns:
+            UsersOut: A paginated list of users.
+
+        Raises:
+            HTTPException: If any database operation fails.
+        """
         skip = (page - 1) * limit
         query = {}
         if search:
@@ -96,9 +138,21 @@ class UserService:
         total = await db["users"].count_documents(query)
         return UsersOut(users=users, total=total, page=page, limit=limit)
 
-    
     @staticmethod
     async def get_user(db: AsyncIOMotorDatabase, user_id: str) -> UserOut:
+        """
+        Retrieve a specific user by their ID.
+
+        Args:
+            db (AsyncIOMotorDatabase): The MongoDB database instance.
+            user_id (str): The unique identifier of the user.
+
+        Returns:
+            UserOut: The user's information including wallet details.
+
+        Raises:
+            HTTPException: If the user ID format is invalid or the user is not found.
+        """
         if not ObjectId.is_valid(user_id):
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
@@ -121,6 +175,21 @@ class UserService:
     
     @staticmethod
     async def update_user(db: AsyncIOMotorDatabase, user_id: str, updated_user: UserUpdate) -> UserOut:
+        """
+        Update an existing user's information.
+
+        Args:
+            db (AsyncIOMotorDatabase): The MongoDB database instance.
+            user_id (str): The unique identifier of the user to be updated.
+            updated_user (UserUpdate): The updated user data.
+
+        Returns:
+            UserOut: The updated user's information including wallet details.
+
+        Raises:
+            HTTPException: If the user ID format is invalid, no fields are provided for update,
+                           or the user is not found.
+        """
         if not ObjectId.is_valid(user_id):
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
@@ -160,6 +229,19 @@ class UserService:
     
     @staticmethod
     async def delete_user(db: AsyncIOMotorDatabase, user_id: str) -> UserOutDelete:
+        """
+        Delete a user by their ID.
+
+        Args:
+            db (AsyncIOMotorDatabase): The MongoDB database instance.
+            user_id (str): The unique identifier of the user to be deleted.
+
+        Returns:
+            UserOutDelete: A dictionary containing the deleted user's information.
+
+        Raises:
+            HTTPException: If the user ID format is invalid or the user is not found.
+        """
         if not ObjectId.is_valid(user_id):
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
@@ -189,6 +271,17 @@ class UserService:
     
     @staticmethod
     async def add_wallet(db: AsyncIOMotorDatabase, user_id: str, amount: float) -> None:
+        """
+        Add funds to a user's wallet.
+
+        Args:
+            db (AsyncIOMotorDatabase): The MongoDB database instance.
+            user_id (str): The unique identifier of the user.
+            amount (float): The amount to add to the wallet.
+
+        Raises:
+            HTTPException: If the wallet is not found.
+        """
         wallet = await db["wallets"].find_one({"user_id": user_id})
         if not wallet:
             raise HTTPException(
@@ -203,6 +296,17 @@ class UserService:
     
     @staticmethod
     async def deduct_wallet(db: AsyncIOMotorDatabase, user_id: str, amount: float) -> None:
+        """
+        Deduct funds from a user's wallet.
+
+        Args:
+            db (AsyncIOMotorDatabase): The MongoDB database instance.
+            user_id (str): The unique identifier of the user.
+            amount (float): The amount to deduct from the wallet.
+
+        Raises:
+            HTTPException: If the wallet is not found or if there are insufficient funds.
+        """
         wallet = await db["wallets"].find_one({"user_id": user_id})
         if not wallet:
             raise HTTPException(

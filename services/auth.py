@@ -1,3 +1,11 @@
+"""
+Authentication Service Module.
+
+This module defines the `AuthService` class, which handles user authentication
+operations such as user signup, login, and token refreshing. It interacts with the
+database to manage user credentials and generate JWT tokens for secure access.
+"""
+
 from fastapi import HTTPException, status
 from app.schemas.auth import Token, Signup, UserInDB
 from app.core.security import verify_password, create_access_token, get_password_hash
@@ -5,10 +13,27 @@ from motor.motor_asyncio import AsyncIOMotorClient
 from typing import Optional
 from fastapi.security.oauth2 import OAuth2PasswordRequestForm
 
+
 class AuthService:
+    """
+    Service class for handling authentication-related operations.
+    """
 
     @staticmethod
     async def signup(db: AsyncIOMotorClient, user: Signup):
+        """
+        Register a new user.
+
+        Args:
+            db (AsyncIOMotorClient): The MongoDB database instance.
+            user (Signup): The signup information provided by the user.
+
+        Returns:
+            dict: A dictionary containing the created user's information.
+
+        Raises:
+            HTTPException: If the username or email already exists.
+        """
         # Check if username or email already exists
         existing_user = await db["users"].find_one({
             "$or": [
@@ -41,6 +66,19 @@ class AuthService:
 
     @staticmethod
     async def login(user_credentials: OAuth2PasswordRequestForm, db: AsyncIOMotorClient) -> Token:
+        """
+        Authenticate a user and generate a JWT token.
+
+        Args:
+            user_credentials (OAuth2PasswordRequestForm): The user's login credentials.
+            db (AsyncIOMotorClient): The MongoDB database instance.
+
+        Returns:
+            Token: A Pydantic model containing the access token and token type.
+
+        Raises:
+            HTTPException: If the username or password is incorrect.
+        """
         user = await db["users"].find_one({"username": user_credentials.username})
         if not user:
             raise HTTPException(
@@ -62,6 +100,19 @@ class AuthService:
 
     @staticmethod
     async def get_refresh_token(token: str, db: AsyncIOMotorClient) -> Token:
+        """
+        Refresh the access token using a refresh token.
+
+        Args:
+            token (str): The refresh token provided in the request header.
+            db (AsyncIOMotorClient): The MongoDB database instance.
+
+        Returns:
+            Token: A Pydantic model containing the new access token and token type.
+
+        Raises:
+            HTTPException: If the refresh token functionality is not implemented.
+        """
         # Implement refresh token logic here
         # Placeholder implementation
         raise HTTPException(

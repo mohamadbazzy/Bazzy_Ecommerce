@@ -1,13 +1,41 @@
+"""
+Carts Service Module.
+
+This module defines the `CartService` class, which manages shopping cart operations
+such as retrieving all carts, fetching a specific cart, creating a new cart, updating
+an existing cart, and deleting a cart. It enforces authorization based on user roles
+and interacts with the database to perform CRUD operations on cart data.
+"""
+
 from app.db.database import database
 from app.core.security import get_current_user
 from app.schemas.carts import CartCreate, CartUpdate
 from bson import ObjectId
 from fastapi import HTTPException
 
+
 class CartService:
+    """
+    Service class for managing shopping carts.
+    """
 
     @staticmethod
     async def get_all_carts(token, db, page, limit):
+        """
+        Retrieve all shopping carts with pagination.
+
+        Args:
+            token: The JWT token containing user credentials.
+            db (AsyncIOMotorDatabase): The MongoDB database instance.
+            page (int): The current page number.
+            limit (int): The number of carts per page.
+
+        Returns:
+            dict: A dictionary containing a list of carts, current page, and limit.
+
+        Raises:
+            HTTPException: If the user is not authorized.
+        """
         user = await get_current_user(token)
         if user["role"] != "admin":
             raise HTTPException(status_code=403, detail="Not authorized")
@@ -21,6 +49,20 @@ class CartService:
 
     @staticmethod
     async def get_cart(token, db, cart_id):
+        """
+        Retrieve a specific shopping cart by its ID.
+
+        Args:
+            token: The JWT token containing user credentials.
+            db (AsyncIOMotorDatabase): The MongoDB database instance.
+            cart_id (str): The unique identifier of the cart.
+
+        Returns:
+            dict: A dictionary containing the cart details.
+
+        Raises:
+            HTTPException: If the cart is not found or the user is not authorized.
+        """
         user = await get_current_user(token)
         cart = await database["carts"].find_one({"_id": ObjectId(cart_id)})
         if not cart:
@@ -33,6 +75,20 @@ class CartService:
 
     @staticmethod
     async def create_cart(token, db, cart_data: CartCreate):
+        """
+        Create a new shopping cart for the authenticated user.
+
+        Args:
+            token: The JWT token containing user credentials.
+            db (AsyncIOMotorDatabase): The MongoDB database instance.
+            cart_data (CartCreate): The cart data to be created.
+
+        Returns:
+            dict: A dictionary containing the created cart details.
+
+        Raises:
+            HTTPException: If the cart creation fails.
+        """
         user = await get_current_user(token)
         cart_dict = {
             "user_id": ObjectId(user["_id"]),
@@ -46,6 +102,21 @@ class CartService:
 
     @staticmethod
     async def update_cart(token, db, cart_id, updated_cart: CartUpdate):
+        """
+        Update an existing shopping cart.
+
+        Args:
+            token: The JWT token containing user credentials.
+            db (AsyncIOMotorDatabase): The MongoDB database instance.
+            cart_id (str): The unique identifier of the cart to be updated.
+            updated_cart (CartUpdate): The updated cart data.
+
+        Returns:
+            dict: A dictionary containing the updated cart details.
+
+        Raises:
+            HTTPException: If the cart is not found, the user is not authorized, or the cart is not modified.
+        """
         user = await get_current_user(token)
         cart = await database["carts"].find_one({"_id": ObjectId(cart_id)})
         if not cart:
@@ -63,6 +134,20 @@ class CartService:
 
     @staticmethod
     async def delete_cart(token, db, cart_id):
+        """
+        Delete a shopping cart by its ID.
+
+        Args:
+            token: The JWT token containing user credentials.
+            db (AsyncIOMotorDatabase): The MongoDB database instance.
+            cart_id (str): The unique identifier of the cart to be deleted.
+
+        Returns:
+            dict: A confirmation dictionary indicating successful deletion.
+
+        Raises:
+            HTTPException: If the cart is not found or the user is not authorized.
+        """
         user = await get_current_user(token)
         cart = await database["carts"].find_one({"_id": ObjectId(cart_id)})
         if not cart:
