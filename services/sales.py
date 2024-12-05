@@ -1,6 +1,7 @@
 from motor.motor_asyncio import AsyncIOMotorDatabase
 from fastapi import HTTPException, status
 from app.schemas.sales import SaleRequest, SaleResponse
+from app.schemas.sales import AddGoodRequest
 
 class SalesService:
     @staticmethod
@@ -70,3 +71,23 @@ class SalesService:
             remaining_balance=new_balance,
             purchased_item=sale_request.good_name,
         )
+class SalesService:
+    @staticmethod
+    async def add_good(db: AsyncIOMotorDatabase, good: AddGoodRequest):
+        """Add a new good to the database."""
+        # Check if the good already exists
+        existing_good = await db["goods"].find_one({"name": good.name})
+        if existing_good:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST, 
+                detail="Good already exists"
+            )
+        
+        # Insert the good
+        new_good = {
+            "name": good.name,
+            "price": good.price,
+            "count": good.count,
+            "description": good.description
+        }
+        await db["goods"].insert_one(new_good)

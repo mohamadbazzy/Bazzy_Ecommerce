@@ -2,8 +2,14 @@
 from fastapi import FastAPI
 from app.routers import accounts, auth, categories, products, users
 from app.db.database import connect_db, close_db
+from app.routers import sales
+from app.routers import reviews
+
+
 
 app = FastAPI()
+app.include_router(sales.router, prefix="/sales", tags=["Sales"])
+app.include_router(reviews.router, prefix="/reviews", tags=["Reviews"])
 
 # Include Routers
 app.include_router(accounts.router)
@@ -12,6 +18,7 @@ app.include_router(categories.router)
 app.include_router(products.router)
 app.include_router(users.router)
 app.include_router(products.router)
+app.include_router(reviews.router)
 
 # Startup and Shutdown Events
 @app.on_event("startup")
